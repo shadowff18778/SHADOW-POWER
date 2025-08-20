@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHADOW POWER - Mise à jour</title>
+    <!-- Chargement de la police 'Inter' depuis Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Chargement de Tailwind CSS via CDN pour un style moderne -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Configuration et animations personnalisées */
+        :root {
+            --shadow-red-dark: #B91C1C;
+            --shadow-red-light: #F87171;
+            --shadow-red-neon: #ff0055;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            transition: background-color 0.5s ease;
+            background-color: #1a202c;
+            color: white;
+        }
+
+        .gradient-text-red {
+            background-image: linear-gradient(45deg, var(--shadow-red-dark), var(--shadow-red-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        @keyframes titleGlow {
+            0%, 100% { text-shadow: 0 0 5px var(--shadow-red-light), 0 0 10px var(--shadow-red-dark); }
+            50% { text-shadow: 0 0 20px var(--shadow-red-light), 0 0 30px var(--shadow-red-dark); }
+        }
+        .animate-title-glow { animation: titleGlow 3s ease-in-out infinite; }
+        
+        @keyframes footer-glow {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+        .animate-footer-glow { animation: footer-glow 4s ease-in-out infinite; }
+
+        .fade-in-up { animation: fadeInUp 0.5s ease-out forwards; }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .app-card {
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+            will-change: transform, box-shadow;
+        }
+
+        .app-card:hover {
+            transform: translateY(-8px) scale(1.03);
+            box-shadow: 0 15px 30px rgba(185, 28, 28, 0.4);
+        }
+
+        .loading-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(18, 18, 18, 1);
+            display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100;
+            opacity: 1; transition: opacity 0.5s ease-in-out;
+        }
+
+        .loader {
+            width: 80px; height: 80px;
+            border: 8px solid rgba(255, 255, 255, 0.2);
+            border-top-color: var(--shadow-red-light);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @keyframes modal-open-content { from { opacity: 0; transform: translateY(20px) scale(0.9); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        @keyframes modal-close-content { from { opacity: 1; transform: translateY(0) scale(1); } to { opacity: 0; transform: translateY(20px) scale(0.9); } }
+
+        .app-modal-container {
+            display: none; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+        }
+        .app-modal-container.is-open {
+            display: flex; opacity: 1; pointer-events: auto;
+        }
+        .app-modal-container.is-open #modalContent { animation: modal-open-content 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) forwards; }
+        .app-modal-container.is-closing #modalContent { animation: modal-close-content 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) forwards; }
+
+        #downloadBar {
+            position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 600px;
+            background: rgba(40, 40, 40, 0.95);
+            backdrop-filter: blur(15px) saturate(180%); -webkit-backdrop-filter: blur(15px) saturate(180%);
+            border: 1px solid rgba(80, 80, 80, 0.5); border-radius: 12px; padding: 16px 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            transition: bottom 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+            z-index: 60; display: none;
+        }
+        #downloadBar.show { bottom: 20px; display: block; }
+        #downloadBar.hide { bottom: -100px; }
+        
+        #progressBar { height: 8px; background: rgba(255, 255, 255, 0.1); border-radius: 4px; overflow: hidden; margin-top: 8px; }
+        #progressBarInner { height: 100%; background: linear-gradient(90deg, #F87171, #B91C1C); width: 0%; transition: width 0.1s linear; }
+
+        #verificationModal {
+            display: none; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+        }
+        #verificationModal.show { display: flex; opacity: 1; pointer-events: auto; }
+        #verificationModal.hide { opacity: 0; pointer-events: none; }
+
+        .verification-box { border: 2px solid #555; background: #222; transition: background-color 0.2s ease, border-color 0.2s ease; }
+        .verification-box:hover { border-color: #F87171; }
+        .checkmark { opacity: 0; transform: scale(0.8); transition: opacity 0.2s ease, transform 0.2s ease; }
+        #verificationCheckbox:checked + .checkmark { opacity: 1; transform: scale(1); }
+
+        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .loading-circle { animation: rotate 1s linear infinite; }
+        
+        @keyframes neon-glow {
+            from { box-shadow: 0 0 5px var(--shadow-red-neon), 0 0 10px var(--shadow-red-neon), 0 0 15px var(--shadow-red-neon), inset 0 0 5px var(--shadow-red-neon); }
+            to { box-shadow: 0 0 10px var(--shadow-red-neon), 0 0 20px var(--shadow-red-neon), 0 0 30px var(--shadow-red-neon), inset 0 0 10px var(--shadow-red-neon); }
+        }
+        .mandatory-box {
+            width: 90%; max-width: 500px;
+            background: rgba(18, 18, 18, 0.8); backdrop-filter: blur(30px) saturate(200%); -webkit-backdrop-filter: blur(30px) saturate(200%);
+            border: 2px solid var(--shadow-red-neon); border-radius: 25px; padding: 40px; text-align: center;
+            transform: scale(0.9); opacity: 0; transition: transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.5s ease;
+            animation: neon-glow 2s ease-in-out infinite alternate;
+        }
+        .mandatory-box.show { transform: scale(1); opacity: 1; }
+        
+    </style>
+</head>
+<body class="bg-gray-950 text-white min-h-screen flex flex-col items-center p-4 md:p-8">
+
+    <!-- Modale de mise à jour obligatoire -->
+    <div id="mandatoryUpdateModal" class="fixed inset-0 bg-black bg-opacity-90 flex justify-center items-center z-50 hidden">
+        <div class="mandatory-box transform transition-all duration-500 ease-in-out">
+            <h2 class="text-4xl font-bold text-red-500 mb-2">MISE À JOUR CRITIQUE</h2>
+            <p class="text-xl font-bold text-gray-200 mb-4">Mise à jour de sécurité</p>
+            <p class="text-gray-300 text-lg leading-relaxed mb-8">
+                Pour des raisons de sécurité et de performance, une mise à jour est requise. Vous ne pouvez pas ignorer cette version.
+            </p>
+            <button id="mandatoryDownloadBtn" class="flex-1 w-full bg-gradient-to-r from-red-700 to-red-400 text-white font-bold py-4 px-8 rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 ease-in-out">
+                Mettre à jour maintenant
+            </button>
+        </div>
+    </div>
+
+    <!-- Modale de mise à jour optionnelle -->
+    <div id="updateModal" class="fixed inset-0 bg-black bg-opacity-80 flex justify-center items-center z-50 hidden">
+        <div class="update-box bg-gray-900 rounded-3xl p-8 max-w-lg w-full transform transition-all duration-300 ease-in-out">
+            <h2 class="text-3xl font-bold gradient-text-red mb-2">Nouvelle Version</h2>
+            <p class="text-xl font-bold text-gray-200 mb-4">Version 2.0</p>
+            <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                Une nouvelle mise à jour est disponible avec des fonctionnalités améliorées et une sécurité renforcée. Téléchargez maintenant pour la meilleure expérience !
+            </p>
+            <div class="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
+                <button id="updateDownloadBtn" class="flex-1 bg-gradient-to-r from-red-700 to-red-400 text-white font-semibold py-3 px-8 rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 ease-in-out">
+                    Télécharger
+                </button>
+                <button id="updateIgnoreBtn" class="flex-1 bg-gray-700 text-gray-200 font-semibold py-3 px-8 rounded-full shadow-lg hover:bg-gray-600 transform hover:scale-105 transition-all duration-300 ease-in-out">
+                    Ignorer
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Écran de chargement -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="loader"></div>
+        <p class="loader-text mt-4 text-xl animate-pulse">Chargement...</p>
+    </div>
+
+    <!-- Contenu principal (initialement masqué) -->
+    <div id="mainContent" class="hidden w-full flex flex-col items-center">
+        <!-- En-tête avec un titre stylisé -->
+        <header class="w-full max-w-4xl text-center py-8">
+            <h1 class="text-5xl md:text-7xl font-bold gradient-text-red animate-title-glow">SHADOW POWER</h1>
+        </header>
+        
+        <!-- Conteneur principal pour la barre de recherche et les résultats -->
+        <main class="w-full max-w-4xl px-4 flex flex-col items-center">
+            <!-- Barre de recherche stylée -->
+            <div class="relative w-full mb-8">
+                <input type="text" id="searchInput" placeholder="Rechercher des applications..."
+                       class="w-full bg-gray-800 text-white placeholder-gray-400 py-4 px-6 rounded-3xl border-2 border-gray-700 focus:outline-none focus:border-red-500 transition-all duration-300 ease-in-out text-lg pl-14 shadow-md">
+                <!-- Icône de recherche -->
+                <div class="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </div>
+            </div>
+            
+            <!-- Conteneur pour afficher les résultats de recherche -->
+            <div id="appResults" class="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Les cartes d'application seront insérées par JavaScript -->
+            </div>
+        </main>
+
+        <!-- Signature du pied de page -->
+        <footer class="w-full text-center py-8 mt-auto">
+            <p class="text-sm text-gray-400 animate-footer-glow">
+                Propulsé par <span class="gradient-text-red">SHADOW</span>
+            </p>
+        </footer>
+    </div>
+
+    <!-- Modale des détails de l'application -->
+    <div id="appModal" class="fixed inset-0 bg-black bg-opacity-75 items-center justify-center p-4 z-50 app-modal-container">
+        <div class="bg-gray-900 rounded-3xl p-8 max-w-lg w-full transform" id="modalContent">
+            <!-- Bouton de fermeture -->
+            <button id="closeModalBtn" class="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors duration-200">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <div class="flex flex-col items-center text-center space-y-4">
+                <img id="modalIcon" src="" alt="Icône de l'application" class="w-24 h-24 rounded-2xl shadow-lg">
+                <h2 id="modalTitle" class="text-3xl font-bold gradient-text-red"></h2>
+                <p id="modalDescription" class="text-gray-300 text-lg leading-relaxed"></p>
+                <!-- Bouton de téléchargement -->
+                <button id="modalDownloadBtn" class="bg-gradient-to-r from-red-700 to-red-400 text-white font-semibold py-3 px-8 rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 ease-in-out">
+                    Télécharger
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Barre de téléchargement flottante -->
+    <div id="downloadBar" class="flex flex-col items-center justify-center">
+        <div class="flex items-center space-x-4 w-full">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            <div class="flex-1">
+                <p id="downloadStatus" class="text-gray-300 text-sm font-medium">Préparation du téléchargement...</p>
+                <div id="progressBar"><div id="progressBarInner"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modale de vérification -->
+    <div id="verificationModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
+        <div class="bg-gray-900 rounded-3xl p-8 max-w-sm w-full text-center flex flex-col items-center">
+            <h2 class="text-2xl font-bold mb-4 gradient-text-red">Vérification de sécurité</h2>
+            <p class="text-gray-300 mb-6">Veuillez cocher la case pour confirmer que vous n'êtes pas un robot.</p>
+            <div id="robotCheckContainer" class="flex items-center justify-center mb-6">
+                <div id="loadingCircle" class="w-8 h-8 rounded-full border-2 border-gray-500 border-t-red-500 loading-circle"></div>
+                <label for="verificationCheckbox" class="hidden flex items-center cursor-pointer">
+                    <div class="relative w-6 h-6 rounded verification-box">
+                        <input type="checkbox" id="verificationCheckbox" class="hidden">
+                        <svg class="checkmark absolute inset-0 w-6 h-6 text-red-500 p-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                    <span class="ml-3 text-lg font-medium text-gray-300">Je ne suis pas un robot</span>
+                </label>
+            </div>
+            <p id="verificationStatus" class="text-sm text-gray-400">Vérification du système...</p>
+        </div>
+    </div>
+
+    <script>
+        // =========================================================================
+        // Configuration de l'application
+        // Les variables pour les popups
+        // =========================================================================
+        const SHOW_UPDATE_POPUP = false; 
+        const NEW_VERSION_LINK = 'https://google.com/store/shadow-power-v2.0';
+        const SHOW_MANDATORY_POPUP = false; 
+        const MANDATORY_VERSION_LINK = 'https://google.com/store/shadow-power-mandatory-v2.0';
+        
+        // Données des applications
+        const apps = [
+            {
+                id: 'shadowrun',
+                icon: 'https://placehold.co/150x150/B91C1C/FFFFFF?text=SR',
+                title: 'ShadowRun',
+                description: 'Un jeu de course futuriste avec des graphismes époustouflants et des voitures personnalisables. Défiez vos amis et devenez le champion de la piste !',
+                downloadLink: 'https://google.com/store/shadowrun'
+            },
+            {
+                id: 'code-master',
+                icon: 'https://placehold.co/150x150/EC4899/FFFFFF?text=Code',
+                title: 'CodeMaster',
+                description: 'Apprenez à coder avec des tutoriels interactifs et des défis amusants. Maîtrisez Python, JavaScript, et bien d\'autres langages !',
+                downloadLink: 'https://google.com/store/codemaster'
+            },
+            {
+                id: 'zen-flow',
+                icon: 'https://placehold.co/150x150/4B5563/FFFFFF?text=Zen',
+                title: 'ZenFlow',
+                description: 'Une application de méditation guidée pour réduire le stress et améliorer la concentration. Accédez à des sons relaxants et des exercices de respiration.',
+                downloadLink: 'https://google.com/store/zenflow'
+            }
+        ];
+
+        // Références des éléments DOM
+        const searchInput = document.getElementById('searchInput');
+        const appResultsContainer = document.getElementById('appResults');
+        const appModal = document.getElementById('appModal');
+        const modalContent = document.getElementById('modalContent');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const modalIcon = document.getElementById('modalIcon');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalDescription = document.getElementById('modalDescription');
+        const modalDownloadBtn = document.getElementById('modalDownloadBtn');
+        const loadingScreen = document.getElementById('loadingScreen');
+        const mainContent = document.getElementById('mainContent');
+        const downloadBar = document.getElementById('downloadBar');
+        const downloadStatus = document.getElementById('downloadStatus');
+        const progressBarInner = document.getElementById('progressBarInner');
+        const verificationModal = document.getElementById('verificationModal');
+        const verificationCheckbox = document.getElementById('verificationCheckbox');
+        const verificationStatus = document.getElementById('verificationStatus');
+        const loadingCircle = document.getElementById('loadingCircle');
+        const robotCheckContainer = document.getElementById('robotCheckContainer');
+        const updateModal = document.getElementById('updateModal');
+        const updateDownloadBtn = document.getElementById('updateDownloadBtn');
+        const updateIgnoreBtn = document.getElementById('updateIgnoreBtn');
+        const mandatoryUpdateModal = document.getElementById('mandatoryUpdateModal');
+        const mandatoryDownloadBtn = document.getElementById('mandatoryDownloadBtn');
+        
+        let currentDownloadLink = '';
+        let downloadTimer;
+        
+        // Fonction pour afficher les applications filtrées
+        const displayApps = (filteredApps) => {
+            appResultsContainer.innerHTML = '';
+            if (filteredApps.length === 0) {
+                appResultsContainer.innerHTML = '<p class="text-gray-500 text-center col-span-full">Aucun résultat trouvé.</p>';
+                return;
+            }
+
+            filteredApps.forEach((app, index) => {
+                const appCard = document.createElement('div');
+                appCard.dataset.id = app.id;
+                appCard.className = 'app-card bg-gray-800 rounded-2xl p-6 flex flex-col items-center text-center cursor-pointer transition-all duration-300 hover:bg-gray-700 opacity-0';
+                appCard.innerHTML = `
+                    <img src="${app.icon}" alt="Icône de ${app.title}" class="w-16 h-16 rounded-xl mb-4 shadow-md transition-transform duration-200">
+                    <h3 class="text-xl font-bold mb-1 gradient-text-red">${app.title}</h3>
+                    <p class="text-gray-400 text-sm overflow-hidden text-ellipsis whitespace-nowrap w-full">${app.description}</p>
+                `;
+                appResultsContainer.appendChild(appCard);
+                setTimeout(() => {
+                    appCard.classList.remove('opacity-0');
+                    appCard.classList.add('fade-in-up');
+                }, index * 100);
+            });
+        };
+
+        // Fonction pour gérer la recherche et l'affichage des résultats
+        const handleSearch = () => {
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            const filteredApps = apps.filter(app => app.title.toLowerCase().includes(searchTerm));
+            displayApps(filteredApps);
+        };
+        
+        // Fonction pour ouvrir la modale
+        const openModal = (appId) => {
+            const app = apps.find(a => a.id === appId);
+            if (!app) return;
+            modalIcon.src = app.icon;
+            modalIcon.alt = `Icône de ${app.title}`;
+            modalTitle.textContent = app.title;
+            modalDescription.textContent = app.description;
+            currentDownloadLink = app.downloadLink;
+            appModal.classList.remove('is-closing');
+            appModal.classList.add('is-open');
+        };
+
+        // Fonction pour fermer la modale
+        const closeModal = () => {
+            appModal.classList.add('is-closing');
+            modalContent.addEventListener('animationend', () => {
+                appModal.classList.remove('is-open', 'is-closing');
+            }, { once: true });
+        };
+
+        // Fonction pour masquer l'écran de chargement
+        const hideLoadingScreen = () => {
+            loadingScreen.style.opacity = '0';
+            setTimeout(() => {
+                loadingScreen.classList.add('hidden');
+                mainContent.classList.remove('hidden');
+            }, 500);
+        };
+
+        // Fonctions pour la barre de téléchargement et les modales de vérification/mise à jour
+        const hideDownloadBar = () => { downloadBar.classList.add('hide'); setTimeout(() => { downloadBar.style.display = 'none'; downloadBar.classList.remove('show', 'hide'); }, 500); };
+        const hideVerificationModal = () => { verificationModal.classList.add('hide'); setTimeout(() => { verificationModal.style.display = 'none'; verificationModal.classList.remove('show', 'hide'); }, 300); };
+        const closeUpdateModal = () => { updateModal.classList.remove('show'); setTimeout(() => { updateModal.style.display = 'none'; }, 300); };
+        const closeMandatoryModal = () => { mandatoryUpdateModal.classList.remove('show'); setTimeout(() => { mandatoryUpdateModal.style.display = 'none'; }, 500); };
+
+        // Nouvelle fonction pour gérer le téléchargement de manière fiable
+        const startDownloadByLink = (url) => {
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = url.split('/').pop(); // Nom de fichier basé sur le lien
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        };
+
+        // Gérer le processus de téléchargement
+        const handleDownloadProcess = (link) => {
+            closeModal();
+            currentDownloadLink = link;
+            downloadBar.style.display = 'flex';
+            setTimeout(() => { downloadBar.classList.add('show'); }, 10);
+            const downloadTime = 6000;
+            const updateInterval = 100;
+            let progress = 0;
+            const progressSteps = downloadTime / updateInterval;
+            downloadTimer = setInterval(() => {
+                progress += 1;
+                const percentage = (progress / progressSteps) * 100;
+                progressBarInner.style.width = `${percentage}%`;
+                if (percentage < 25) { downloadStatus.textContent = 'Connexion aux serveurs...'; }
+                else if (percentage < 50) { downloadStatus.textContent = 'Préparation du fichier...'; }
+                else if (percentage < 75) { downloadStatus.textContent = 'Cryptage de la signature...'; }
+                else if (percentage < 100) { downloadStatus.textContent = 'Vérification de l\'intégrité...'; }
+                if (progress >= progressSteps) {
+                    clearInterval(downloadTimer);
+                    downloadStatus.textContent = 'Préparation de la vérification...';
+                    setTimeout(() => { hideDownloadBar(); launchVerificationModal(); }, 500);
+                }
+            }, updateInterval);
+        };
+
+        // Lancer la modale de vérification
+        const launchVerificationModal = () => {
+            verificationModal.style.display = 'flex';
+            setTimeout(() => {
+                verificationModal.classList.add('show');
+                loadingCircle.style.display = 'block';
+                robotCheckContainer.querySelector('label').style.display = 'none';
+                verificationStatus.textContent = 'Vérification du système...';
+                setTimeout(() => {
+                    loadingCircle.style.display = 'none';
+                    robotCheckContainer.querySelector('label').style.display = 'flex';
+                    verificationStatus.textContent = 'Veuillez cocher la case.';
+                }, 3000);
+            }, 10);
+        };
+
+        // Gérer la vérification
+        const handleVerificationCheck = (event) => {
+            if (event.target.checked) {
+                loadingCircle.style.display = 'block';
+                robotCheckContainer.querySelector('label').style.display = 'none';
+                verificationStatus.textContent = 'Vérification en cours...';
+                verificationStatus.classList.add('text-red-500');
+                setTimeout(() => {
+                    verificationStatus.textContent = 'Vérification terminée ! Le téléchargement va commencer.';
+                    verificationStatus.classList.remove('text-red-500');
+                    verificationStatus.classList.add('text-green-500');
+                    setTimeout(() => {
+                        hideVerificationModal();
+                        startDownloadByLink(currentDownloadLink); // Utilise la nouvelle fonction
+                    }, 1000);
+                }, 4000);
+            }
+        };
+
+        // Écouteur d'événement pour le chargement du DOM
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                if (SHOW_MANDATORY_POPUP) {
+                    mandatoryUpdateModal.style.display = 'flex';
+                    setTimeout(() => { mandatoryUpdateModal.classList.add('show'); }, 10);
+                } else if (SHOW_UPDATE_POPUP) {
+                    updateModal.style.display = 'flex';
+                    setTimeout(() => { updateModal.classList.add('show'); }, 10);
+                } else {
+                    setTimeout(() => {
+                        hideLoadingScreen();
+                        // Pas d'appel initial à displayApps(apps);
+                    }, 2000);
+                }
+
+                // Écouteurs d'événements pour les modales et les boutons
+                mandatoryDownloadBtn.addEventListener('click', () => { closeMandatoryModal(); handleDownloadProcess(MANDATORY_VERSION_LINK); });
+                updateDownloadBtn.addEventListener('click', () => { closeUpdateModal(); handleDownloadProcess(NEW_VERSION_LINK); });
+                updateIgnoreBtn.addEventListener('click', () => { closeUpdateModal(); hideLoadingScreen(); });
+
+                searchInput.addEventListener('input', handleSearch);
+                appResultsContainer.addEventListener('click', (event) => {
+                    const card = event.target.closest('.app-card');
+                    if (card) { openModal(card.dataset.id); }
+                });
+                closeModalBtn.addEventListener('click', closeModal);
+                modalDownloadBtn.addEventListener('click', () => handleDownloadProcess(currentDownloadLink));
+                verificationCheckbox.addEventListener('change', handleVerificationCheck);
+            } catch (error) {
+                mainContent.classList.remove('hidden');
+                loadingScreen.classList.add('hidden');
+                appResultsContainer.innerHTML = `
+                    <div class="col-span-full text-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24 text-red-500 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <h2 class="text-3xl font-bold text-red-500 mb-2">Un problème est survenu.</h2>
+                        <p class="text-gray-400 text-lg">Veuillez réessayer plus tard ou recharger la page.</p>
+                        <p class="text-sm text-gray-600 mt-4">Erreur technique : ${error.message}</p>
+                    </div>
+                `;
+                console.error("An error occurred during application initialization:", error);
+            }
+        });
+    </script>
+</body>
+</html>
