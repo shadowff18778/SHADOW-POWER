@@ -332,10 +332,16 @@
         
         // Fonction pour afficher les applications filtrées
         const displayApps = (filteredApps) => {
-            appResultsContainer.innerHTML = '';
+            appResultsContainer.innerHTML = ''; // On vide le conteneur quoi qu'il arrive
+            
+            // Si la liste est vide, on arrête là. Pas de message, pas de cartes.
             if (filteredApps.length === 0) {
-                appResultsContainer.innerHTML = '<p class="text-gray-500 text-center col-span-full">Aucun résultat trouvé.</p>';
                 return;
+            }
+
+            // Si la recherche a donné 0 résultat, on affiche "aucun résultat"
+            if (searchInput.value.trim() !== '' && filteredApps.length === 0) {
+                 appResultsContainer.innerHTML = '<p class="text-gray-500 text-center col-span-full opacity-0 fade-in-up">Aucun résultat trouvé.</p>';
             }
 
             filteredApps.forEach((app, index) => {
@@ -358,8 +364,13 @@
         // Fonction pour gérer la recherche et l'affichage des résultats
         const handleSearch = () => {
             const searchTerm = searchInput.value.toLowerCase().trim();
-            const filteredApps = apps.filter(app => app.title.toLowerCase().includes(searchTerm));
-            displayApps(filteredApps);
+            // Correction : Si le terme de recherche est vide, on affiche une liste vide.
+            if (searchTerm === '') {
+                displayApps([]);
+            } else {
+                const filteredApps = apps.filter(app => app.title.toLowerCase().includes(searchTerm));
+                displayApps(filteredApps);
+            }
         };
         
         // Fonction pour ouvrir la modale
@@ -481,7 +492,8 @@
                 } else {
                     setTimeout(() => {
                         hideLoadingScreen();
-                        // Pas d'appel initial à displayApps(apps);
+                        // Au lieu d'afficher toutes les applications, on affiche le message de recherche.
+                        displayApps([]); 
                     }, 2000);
                 }
 
