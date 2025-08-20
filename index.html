@@ -233,7 +233,13 @@
     </div>
 
     <!-- Barre de téléchargement flottante -->
-    <div id="downloadBar" class="flex flex-col items-center justify-center">
+    <div id="downloadBar" class="relative flex flex-col items-center justify-center">
+        <!-- Bouton de fermeture pour annuler le téléchargement -->
+        <button id="cancelDownloadBtn" class="absolute top-1 right-1 text-gray-400 hover:text-white p-2 transition-colors duration-200">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </button>
         <div class="flex items-center space-x-4 w-full">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -326,6 +332,7 @@
         const updateIgnoreBtn = document.getElementById('updateIgnoreBtn');
         const mandatoryUpdateModal = document.getElementById('mandatoryUpdateModal');
         const mandatoryDownloadBtn = document.getElementById('mandatoryDownloadBtn');
+        const cancelDownloadBtn = document.getElementById('cancelDownloadBtn');
         
         let currentDownloadLink = '';
         let downloadTimer;
@@ -445,6 +452,18 @@
             }, updateInterval);
         };
 
+        // Fonction pour annuler le téléchargement
+        const cancelDownload = () => {
+            if (downloadTimer) {
+                clearInterval(downloadTimer);
+            }
+            // Réinitialiser la barre de progression
+            progressBarInner.style.width = '0%';
+            downloadStatus.textContent = 'Téléchargement annulé.';
+            // Masquer la barre de téléchargement en douceur
+            hideDownloadBar();
+        };
+
         // Lancer la modale de vérification
         const launchVerificationModal = () => {
             verificationModal.style.display = 'flex';
@@ -510,6 +529,10 @@
                 closeModalBtn.addEventListener('click', closeModal);
                 modalDownloadBtn.addEventListener('click', () => handleDownloadProcess(currentDownloadLink));
                 verificationCheckbox.addEventListener('change', handleVerificationCheck);
+                
+                // Ajout de l'écouteur d'événement pour le bouton d'annulation
+                cancelDownloadBtn.addEventListener('click', cancelDownload);
+
             } catch (error) {
                 mainContent.classList.remove('hidden');
                 loadingScreen.classList.add('hidden');
