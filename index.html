@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SHADOW POWER - Mise à jour</title>
+    <title>SHADOW POWER</title>
     <!-- Chargement de la police 'Inter' depuis Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -133,6 +133,67 @@
         }
         .mandatory-box.show { transform: scale(1); opacity: 1; }
         
+        /* Styles pour la modale des paramètres */
+        #settingsModal {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 0;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 50;
+            display: flex;
+            justify-content: flex-end;
+            transition: width 0.3s ease;
+            overflow: hidden;
+        }
+        
+        #settingsPanel {
+            position: relative;
+            height: 100%;
+            width: min(300px, 80vw); /* Rendre la largeur adaptative */
+            background-color: #1a202c;
+            border-left: 2px solid var(--shadow-red-light);
+            transform: translateX(100%);
+            transition: transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+            display: flex;
+            flex-direction: column;
+            padding: 2rem;
+        }
+        
+        #settingsModal.is-open {
+            width: 100%;
+        }
+
+        #settingsModal.is-open #settingsPanel {
+            transform: translateX(0);
+        }
+
+        /* Animation de chargement plus professionnelle */
+        @keyframes dotFlashing {
+            0% { opacity: 0.2; }
+            20% { opacity: 1; }
+            40% { opacity: 0.2; }
+            100% { opacity: 0.2; }
+        }
+
+        .dot-flashing span {
+            animation: dotFlashing 1s infinite alternate;
+            display: inline-block;
+            margin: 0 2px;
+            width: 8px;
+            height: 8px;
+            background-color: var(--shadow-red-light);
+            border-radius: 50%;
+        }
+        .dot-flashing span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        .dot-flashing span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
     </style>
 </head>
 <body class="bg-gray-950 text-white min-h-screen flex flex-col items-center p-4 md:p-8">
@@ -170,6 +231,29 @@
         </div>
     </div>
 
+    <!-- Modale de paramètres (Maintenant un panneau latéral) -->
+    <div id="settingsModal">
+        <div id="settingsPanel">
+            <!-- Bouton de fermeture -->
+            <button id="closeSettingsModalBtn" class="absolute top-4 left-4 text-gray-400 hover:text-white transition-colors duration-200">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <div class="flex flex-col items-center text-center space-y-4 mt-8">
+                <!-- Nouveau logo SHADOW POWER -->
+                <img src="https://i.imgur.com/ZYAWAGf.png" alt="Logo Shadow Power" class="w-32 h-32 rounded-2xl mb-4">
+                <h2 class="text-3xl font-bold gradient-text-red">SHADOW POWER</h2>
+                <button id="checkUpdatesBtn" class="w-full bg-gray-800 text-white font-semibold py-3 px-8 rounded-full hover:bg-gray-700 transition-all duration-300 ease-in-out mt-4">
+                    Vérifier les mises à jour
+                </button>
+                <div id="updateCheckStatus" class="mt-4 text-gray-400 text-sm"></div>
+            </div>
+            <!-- Version de l'application -->
+            <p class="text-xs text-gray-600 mt-auto text-center">Version : 1.0</p>
+        </div>
+    </div>
+
     <!-- Écran de chargement -->
     <div id="loadingScreen" class="loading-screen">
         <div class="loader"></div>
@@ -177,7 +261,15 @@
     </div>
 
     <!-- Contenu principal (initialement masqué) -->
-    <div id="mainContent" class="hidden w-full flex flex-col items-center">
+    <div id="mainContent" class="hidden w-full flex flex-col items-center relative">
+        <!-- Bouton des paramètres en haut à droite -->
+        <button id="settingsBtn" class="absolute top-4 right-4 md:right-8 text-gray-400 hover:text-red-400 transition-all duration-300 ease-in-out transform hover:rotate-90 z-40">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.527.288 1.05.51 1.573.667z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+        </button>
+        
         <!-- En-tête avec un titre stylisé -->
         <header class="w-full max-w-4xl text-center py-8">
             <h1 class="text-5xl md:text-7xl font-bold gradient-text-red animate-title-glow">SHADOW POWER</h1>
@@ -333,6 +425,12 @@
         const mandatoryUpdateModal = document.getElementById('mandatoryUpdateModal');
         const mandatoryDownloadBtn = document.getElementById('mandatoryDownloadBtn');
         const cancelDownloadBtn = document.getElementById('cancelDownloadBtn');
+        const settingsBtn = document.getElementById('settingsBtn');
+        const settingsModal = document.getElementById('settingsModal');
+        const settingsPanel = document.getElementById('settingsPanel');
+        const closeSettingsModalBtn = document.getElementById('closeSettingsModalBtn');
+        const checkUpdatesBtn = document.getElementById('checkUpdatesBtn');
+        const updateCheckStatus = document.getElementById('updateCheckStatus');
         
         let currentDownloadLink = '';
         let downloadTimer;
@@ -413,8 +511,8 @@
         // Fonctions pour la barre de téléchargement et les modales de vérification/mise à jour
         const hideDownloadBar = () => { downloadBar.classList.add('hide'); setTimeout(() => { downloadBar.style.display = 'none'; downloadBar.classList.remove('show', 'hide'); }, 500); };
         const hideVerificationModal = () => { verificationModal.classList.add('hide'); setTimeout(() => { verificationModal.style.display = 'none'; verificationModal.classList.remove('show', 'hide'); }, 300); };
-        const closeUpdateModal = () => { updateModal.classList.remove('show'); setTimeout(() => { updateModal.style.display = 'none'; }, 300); };
-        const closeMandatoryModal = () => { mandatoryUpdateModal.classList.remove('show'); setTimeout(() => { mandatoryUpdateModal.style.display = 'none'; }, 500); };
+        const closeUpdateModal = () => { updateModal.style.display = 'none'; updateModal.classList.remove('show'); };
+        const closeMandatoryModal = () => { mandatoryUpdateModal.style.display = 'none'; mandatoryUpdateModal.classList.remove('show'); };
 
         // Nouvelle fonction pour gérer le téléchargement de manière fiable
         const startDownloadByLink = (url) => {
@@ -499,27 +597,62 @@
             }
         };
 
-        // Écouteur d'événement pour le chargement du DOM
-        document.addEventListener('DOMContentLoaded', () => {
-            try {
-                if (SHOW_MANDATORY_POPUP) {
-                    mandatoryUpdateModal.style.display = 'flex';
-                    setTimeout(() => { mandatoryUpdateModal.classList.add('show'); }, 10);
-                } else if (SHOW_UPDATE_POPUP) {
+        // Fonctions pour la modale des paramètres
+        const openSettingsModal = () => {
+            settingsModal.classList.add('is-open');
+        };
+
+        const closeSettingsModal = () => {
+            settingsModal.classList.remove('is-open');
+            // Réinitialiser le statut de la vérification
+            updateCheckStatus.innerHTML = '';
+            checkUpdatesBtn.disabled = false;
+        };
+
+        const checkUpdates = () => {
+            checkUpdatesBtn.disabled = true;
+            updateCheckStatus.innerHTML = '<div class="dot-flashing mt-4 flex justify-center space-x-2"><span class="w-2 h-2 rounded-full bg-red-400 animate-pulse"></span><span class="w-2 h-2 rounded-full bg-red-400 animate-pulse" style="animation-delay: 0.2s;"></span><span class="w-2 h-2 rounded-full bg-red-400 animate-pulse" style="animation-delay: 0.4s;"></span></div>';
+
+            setTimeout(() => {
+                if (SHOW_UPDATE_POPUP) {
+                    closeSettingsModal();
                     updateModal.style.display = 'flex';
                     setTimeout(() => { updateModal.classList.add('show'); }, 10);
                 } else {
+                    updateCheckStatus.innerHTML = '<span class="text-green-400">Vous êtes sur la dernière version.</span>';
+                    checkUpdatesBtn.disabled = false;
+                }
+            }, 6000); // 6 secondes de chargement
+        };
+
+        // Écouteur d'événement pour le chargement du DOM
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                // Bug corrigé : L'écran de chargement restait visible si un pop-up était activé.
+                // La nouvelle logique garantit que l'écran de chargement est toujours masqué
+                // à moins qu'une mise à jour obligatoire ne soit en attente d'interaction.
+                if (SHOW_MANDATORY_POPUP) {
+                    mandatoryUpdateModal.style.display = 'flex';
+                    setTimeout(() => { mandatoryUpdateModal.classList.add('show'); }, 10);
+                } else {
+                    // Si aucune mise à jour obligatoire n'est nécessaire, on peut charger le contenu.
+                    // On retarde le chargement du contenu pour laisser le temps au pop-up optionnel d'apparaître,
+                    // et on s'assure que l'écran de chargement disparaît.
                     setTimeout(() => {
                         hideLoadingScreen();
-                        // Au lieu d'afficher toutes les applications, on affiche le message de recherche.
-                        displayApps([]); 
+                        displayApps([]);
+                        // Si le pop-up optionnel est activé, on l'affiche après avoir masqué le chargement
+                        if (SHOW_UPDATE_POPUP) {
+                             updateModal.style.display = 'flex';
+                             setTimeout(() => { updateModal.classList.add('show'); }, 10);
+                        }
                     }, 2000);
                 }
 
                 // Écouteurs d'événements pour les modales et les boutons
                 mandatoryDownloadBtn.addEventListener('click', () => { closeMandatoryModal(); handleDownloadProcess(MANDATORY_VERSION_LINK); });
                 updateDownloadBtn.addEventListener('click', () => { closeUpdateModal(); handleDownloadProcess(NEW_VERSION_LINK); });
-                updateIgnoreBtn.addEventListener('click', () => { closeUpdateModal(); hideLoadingScreen(); });
+                updateIgnoreBtn.addEventListener('click', () => { closeUpdateModal(); });
 
                 searchInput.addEventListener('input', handleSearch);
                 appResultsContainer.addEventListener('click', (event) => {
@@ -532,6 +665,17 @@
                 
                 // Ajout de l'écouteur d'événement pour le bouton d'annulation
                 cancelDownloadBtn.addEventListener('click', cancelDownload);
+                
+                // Écouteurs pour la modale des paramètres
+                settingsBtn.addEventListener('click', openSettingsModal);
+                settingsModal.addEventListener('click', (event) => {
+                    // Fermer la modale si on clique en dehors du panneau
+                    if (event.target === settingsModal) {
+                        closeSettingsModal();
+                    }
+                });
+                closeSettingsModalBtn.addEventListener('click', closeSettingsModal);
+                checkUpdatesBtn.addEventListener('click', checkUpdates);
 
             } catch (error) {
                 mainContent.classList.remove('hidden');
